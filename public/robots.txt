@@ -1,4 +1,2 @@
 User-agent: *
 Allow: /
-
-Sitemap: https://flennium.github.io/SpaghetDB/sitemap.xml

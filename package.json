@@ -7,7 +7,7 @@
     "type": "git",
     "url": "https://github.com/flennium/SpaghetDB.git"
   },
-  "homepage": "https://flennium.github.io/SpaghetDB/",
+  "homepage": "https://github.com/flennium/SpaghetDB",
   "type": "module",
   "scripts": {
     "dev": "vite",
