@@ -16,6 +16,7 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
+    "generate:stress": "node scripts/generate-stress-schemas.mjs",
     "check": "npm run lint && npm test && npm run build"
   },
   "engines": {

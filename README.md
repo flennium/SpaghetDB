@@ -39,6 +39,7 @@ Open `http://localhost:5173`. Node.js 20.19 or newer is required.
 
 1. Open the workspace and select the SQL dialect.
 2. Paste SQL or import a `.sql` file.
+   You can also choose a realistic or stress-test schema from the **Examples** menu above the editor.
 3. Press <kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>Enter</kbd> to parse.
 4. Click a table to inspect it. Double-click it—or focus it and press <kbd>F</kbd>—to enter Focus Mode.
 5. Arrange the graph manually or use horizontal/vertical auto-layout.
@@ -62,6 +63,18 @@ The current release targets schema visualization rather than full SQL execution.
 
 Unsupported schema statements appear as diagnostics instead of stopping the rest of the file. Valid statements still produce a diagram when another statement fails.
 
+## Example and stress schemas
+
+The editor includes three realistic starting points: a PostgreSQL commerce platform, a MySQL deployment service, and a SQLite publishing notebook. It also loads these deterministic PostgreSQL stress fixtures directly from the browser:
+
+| Fixture | Tables | Purpose |
+| --- | ---: | --- |
+| [`stress-100.sql`](public/examples/stress-100.sql) | 100 | Routine interaction and layout testing |
+| [`stress-500.sql`](public/examples/stress-500.sql) | 500 | Sustained parser, renderer, search, and layout load |
+| [`stress-1000.sql`](public/examples/stress-1000.sql) | 1,000 | Extreme-load and regression testing |
+
+Each fixture contains branching foreign keys, secondary ownership relationships, unique constraints, JSON payloads, defaults, and indexes. Regenerate all three after changing the fixture design with `npm run generate:stress`; output is deterministic and committed for direct download.
+
 ## Architecture
 
 ```text
@@ -77,7 +90,7 @@ SQL source
 
 The UI never consumes parser-specific AST nodes. Everything downstream uses the normalized, versioned model in [`src/domain/types.ts`](src/domain/types.ts), keeping rendering and persistence independent from parser internals.
 
-Large schemas receive two additional safeguards: parsing and layout run in dedicated workers, and the canvas mounts only nodes currently inside the viewport. The automated suite includes a 500-table / 499-relationship fixture.
+Large schemas receive two additional safeguards: parsing and layout run in dedicated workers, and the canvas mounts only nodes currently inside the viewport. The automated suite parses both a 500-table chain and the shipped 1,000-table branching fixture.
 
 More detail is available in [the architecture notes](docs/ARCHITECTURE.md).
 
@@ -89,6 +102,7 @@ npm test           # parser and normalization tests
 npm run lint       # Oxlint
 npm run build      # type-check and production bundle
 npm run check      # all release checks
+npm run generate:stress # regenerate large SQL fixtures
 ```
 
 Pull requests are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) before making a larger change.

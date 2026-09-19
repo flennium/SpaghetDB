@@ -15,6 +15,7 @@ interface AppState {
   highContrast: boolean
   largeText: boolean
   setSql: (sql: string) => void
+  loadSource: (dialect: SqlDialect, sql: string) => void
   setDialect: (dialect: SqlDialect) => void
   setProjectName: (name: string) => void
   setProject: (project: Project) => void
@@ -48,6 +49,7 @@ const updateProject = (project: Project, patch: Partial<Project>): Project => ({
 export const useAppStore = create<AppState>((set, get) => ({
   project: initialProject(), parsing: false, parseMessage: 'Ready', theme: (localStorage.getItem('spaghetdb-theme') as Theme) || 'dark', highContrast: localStorage.getItem('spaghetdb-contrast') === 'true', largeText: localStorage.getItem('spaghetdb-large-text') === 'true',
   setSql: (sql) => set((state) => { const project = { ...state.project, source: { ...state.project.source, sql } }; persist(project); return { project } }),
+  loadSource: (dialect, sql) => set((state) => { const project = updateProject(state.project, { source: { dialect, sql }, schema: emptySchema(dialect), layout: { positions: {}, pinned: [] } }); persist(project); return { project, inspectedTableId: undefined, focusTableId: undefined, parseMessage: 'Ready' } }),
   setDialect: (dialect) => set((state) => { const project = updateProject(state.project, { source: { dialect, sql: SAMPLE_SQL[dialect] }, schema: emptySchema(dialect), layout: { positions: {}, pinned: [] } }); persist(project); return { project, inspectedTableId: undefined, focusTableId: undefined } }),
   setProjectName: (name) => set((state) => { const project = updateProject(state.project, { project: { ...state.project.project, name, updatedAt: new Date().toISOString() } }); persist(project); return { project } }),
   setProject: (project) => { persist(project); set({ project, inspectedTableId: undefined, focusTableId: undefined }) },

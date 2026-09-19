@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { readFileSync } from 'node:fs'
 import { SAMPLE_SQL } from './examples'
 import { parseSql, splitStatements } from './parser'
 
@@ -11,16 +12,16 @@ describe('SQL parser pipeline', () => {
 
   it('normalizes PostgreSQL tables and relationships', () => {
     const schema = parseSql(SAMPLE_SQL.postgresql, 'postgresql')
-    expect(schema.tables).toHaveLength(5)
-    expect(schema.relationships).toHaveLength(4)
+    expect(schema.tables).toHaveLength(9)
+    expect(schema.relationships).toHaveLength(11)
     expect(schema.tables.find((table) => table.name === 'order_items')?.isJunction).toBe(true)
-    expect(schema.relationships.find((relationship) => relationship.source.columnName === 'user_id')?.resolved).toBe(true)
+    expect(schema.relationships.every((relationship) => relationship.resolved)).toBe(true)
   })
 
   it.each(['mysql', 'sqlite'] as const)('parses the %s fixture', (dialect) => {
     const schema = parseSql(SAMPLE_SQL[dialect], dialect)
-    expect(schema.tables.length).toBeGreaterThanOrEqual(2)
-    expect(schema.relationships).toHaveLength(1)
+    expect(schema.tables.length).toBeGreaterThanOrEqual(6)
+    expect(schema.relationships.length).toBeGreaterThanOrEqual(5)
     expect(schema.diagnostics.filter((item) => item.severity === 'error')).toHaveLength(0)
   })
 
@@ -45,4 +46,12 @@ describe('SQL parser pipeline', () => {
     expect(schema.diagnostics.filter((item) => item.severity === 'error')).toHaveLength(0)
     expect(performance.now() - startedAt).toBeLessThan(3000)
   }, 5000)
+
+  it('parses the shipped 1,000-table stress fixture', () => {
+    const sql = readFileSync(new URL('../../public/examples/stress-1000.sql', import.meta.url), 'utf8')
+    const schema = parseSql(sql, 'postgresql')
+    expect(schema.tables).toHaveLength(1000)
+    expect(schema.relationships.length).toBeGreaterThan(1200)
+    expect(schema.diagnostics.filter((item) => item.severity === 'error')).toHaveLength(0)
+  }, 10000)
 })
