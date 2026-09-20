@@ -60,8 +60,10 @@ function GraphCanvasInner({ highlighted }: { highlighted?: string }) {
     setBusyMessage('Arranging tables…')
     try {
       const positions = await layoutSchema(schema, direction, layout.pinned, layout.positions)
+      setNodes((current) => current.map((node) => ({ ...node, position: positions[node.id] ?? node.position })))
       setPositions(positions)
-      requestAnimationFrame(() => instance?.fitView({ padding: 0.15, duration: 350 }))
+      await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)))
+      await instance?.fitView({ padding: 0.15, duration: 350 })
       setBusyMessage('Layout complete')
     } catch { setBusyMessage('Could not arrange this schema') }
     setTimeout(() => setBusyMessage(''), 1800)
