@@ -1,9 +1,11 @@
 import ELK from 'elkjs/lib/elk.bundled.js'
 import type { NodePosition, SchemaModel } from './types'
 
+const elk = new ELK()
+
 export async function calculateLayout(schema: SchemaModel, direction: 'RIGHT' | 'DOWN', pinned: string[], existing: Record<string, NodePosition>) {
   const pinnedIds = new Set(pinned)
-  const graph = await new ELK().layout({
+  const graph = await elk.layout({
     id: 'root',
     layoutOptions: {
       'elk.algorithm': 'layered',

@@ -12,7 +12,7 @@ export interface ColumnRef { tableId: string; columnId: string; columnName: stri
 export interface Relationship { id: string; source: ColumnRef; target: ColumnRef; cardinality: 'one-to-one' | 'one-to-many'; optional: boolean; resolved: boolean; targetLabel?: string }
 export interface SchemaModel { version: 1; dialect: SqlDialect; namespaces: Namespace[]; tables: Table[]; relationships: Relationship[]; diagnostics: Diagnostic[] }
 export interface NodePosition { x: number; y: number }
-export interface PersistedLayout { positions: Record<string, NodePosition>; pinned: string[]; viewport?: { x: number; y: number; zoom: number } }
+export interface PersistedLayout { positions: Record<string, NodePosition>; pinned: string[]; direction?: 'RIGHT' | 'DOWN'; viewport?: { x: number; y: number; zoom: number } }
 export interface ProjectMetadata { id: string; name: string; createdAt: string; updatedAt: string }
 export interface ProjectFile { format: 'spaghetdb'; version: 1; project: ProjectMetadata; source: { dialect: SqlDialect; sql: string }; schema: SchemaModel; layout: PersistedLayout }
 export interface Project extends ProjectFile {}

@@ -22,6 +22,8 @@ function GraphCanvasInner({ highlighted }: { highlighted?: string }) {
   const togglePin = useAppStore((state) => state.togglePin)
   const [nodes, setNodes] = useState<Node<TableNodeData>[]>([])
   const [instance, setInstance] = useState<ReactFlowInstance<Node<TableNodeData>, Edge>>()
+  const layoutDirection = layout.direction ?? 'RIGHT'
+  const [busy, setBusy] = useState(false)
   const [busyMessage, setBusyMessage] = useState('')
   const rootRef = useRef<HTMLDivElement>(null)
   const neighbors = useMemo(() => {
@@ -35,9 +37,9 @@ function GraphCanvasInner({ highlighted }: { highlighted?: string }) {
     // eslint-disable-next-line react/set-state-in-effect
     setNodes(schema.tables.map((table, index) => ({
       id: table.id, type: 'table', position: layout.positions[table.id] ?? { x: (index % 3) * 340, y: Math.floor(index / 3) * 300 },
-      data: { table, dimmed: Boolean(focusTableId && !neighbors.has(table.id)), pinned: layout.pinned.includes(table.id), highlighted: highlighted === table.id, onPin: togglePin, onFocus: setFocus, onInspect: inspectTable },
+      data: { table, direction: layoutDirection, dimmed: Boolean(focusTableId && !neighbors.has(table.id)), pinned: layout.pinned.includes(table.id), highlighted: highlighted === table.id, onPin: togglePin, onFocus: setFocus, onInspect: inspectTable },
     })))
-  }, [schema.tables, layout.positions, layout.pinned, focusTableId, neighbors, highlighted, togglePin, setFocus, inspectTable])
+  }, [schema.tables, layout.positions, layout.pinned, layoutDirection, focusTableId, neighbors, highlighted, togglePin, setFocus, inspectTable])
 
   const edges = useMemo<Edge[]>(() => schema.relationships.filter((rel) => rel.resolved).map((rel) => ({
     id: rel.id, source: rel.source.tableId, target: rel.target.tableId,
@@ -56,17 +58,20 @@ function GraphCanvasInner({ highlighted }: { highlighted?: string }) {
     if (node) instance.setCenter(node.position.x + 134, node.position.y + 80, { zoom: Math.max(instance.getZoom(), 0.7), duration: 320 })
   }, [highlighted, instance, nodes])
   const autoLayout = async (direction: 'RIGHT' | 'DOWN') => {
-    if (busyMessage) return
+    if (busy) return
+    setBusy(true)
     setBusyMessage('Arranging tables…')
     try {
       const positions = await layoutSchema(schema, direction, layout.pinned, layout.positions)
-      setNodes((current) => current.map((node) => ({ ...node, position: positions[node.id] ?? node.position })))
-      setPositions(positions)
+      setNodes((current) => current.map((node) => ({ ...node, position: positions[node.id] ?? node.position, data: { ...node.data, direction } })))
+      setPositions(positions, direction)
       await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)))
       await instance?.fitView({ padding: 0.15, duration: 350 })
-      setBusyMessage('Layout complete')
-    } catch { setBusyMessage('Could not arrange this schema') }
-    setTimeout(() => setBusyMessage(''), 1800)
+      setBusyMessage('')
+    } catch {
+      setBusyMessage('Could not arrange this schema')
+      setTimeout(() => setBusyMessage(''), 1800)
+    } finally { setBusy(false) }
   }
   const exportDiagram = async (format: 'svg' | 'png') => {
     const element = rootRef.current?.querySelector('.react-flow__viewport') as HTMLElement | null
@@ -82,10 +87,10 @@ function GraphCanvasInner({ highlighted }: { highlighted?: string }) {
 
   return <div className="canvas-wrap" ref={rootRef}>
     <div className="canvas-toolbar">
-      <button onClick={() => autoLayout('RIGHT')} disabled={Boolean(busyMessage)} title="Horizontal auto-layout"><LayoutDashboard size={15} /> Arrange</button>
-      <button onClick={() => autoLayout('DOWN')} disabled={Boolean(busyMessage)} title="Vertical auto-layout"><Maximize2 size={15} /> Vertical</button>
+      <button onClick={() => autoLayout('RIGHT')} disabled={busy} title="Horizontal auto-layout"><LayoutDashboard size={15} /> Arrange</button>
+      <button onClick={() => autoLayout('DOWN')} disabled={busy} title="Vertical auto-layout"><Maximize2 size={15} /> Vertical</button>
       <span />
-      <button onClick={() => exportDiagram('svg')}><Download size={14} /> SVG</button><button onClick={() => exportDiagram('png')}><Download size={14} /> PNG</button>
+      <button onClick={() => exportDiagram('svg')} disabled={busy}><Download size={14} /> SVG</button><button onClick={() => exportDiagram('png')} disabled={busy}><Download size={14} /> PNG</button>
     </div>
     <span className="sr-only" role="status" aria-live="polite">{busyMessage}</span>
     {focusTableId && <div className="focus-banner"><Focus size={15} /> Focused on <strong>{schema.tables.find((table) => table.id === focusTableId)?.name}</strong><button onClick={() => setFocus()} aria-label="Exit focus mode"><X size={15} /></button></div>}

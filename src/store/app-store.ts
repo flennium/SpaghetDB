@@ -23,7 +23,7 @@ interface AppState {
   inspectTable: (id?: string) => void
   setFocus: (id?: string) => void
   setPosition: (id: string, position: NodePosition) => void
-  setPositions: (positions: Record<string, NodePosition>) => void
+  setPositions: (positions: Record<string, NodePosition>, direction?: 'RIGHT' | 'DOWN') => void
   togglePin: (id: string) => void
   toggleTheme: () => void
   toggleHighContrast: () => void
@@ -67,7 +67,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   inspectTable: (inspectedTableId) => set({ inspectedTableId }),
   setFocus: (focusTableId) => set({ focusTableId, inspectedTableId: focusTableId }),
   setPosition: (id, position) => set((state) => { const project = updateProject(state.project, { layout: { ...state.project.layout, positions: { ...state.project.layout.positions, [id]: position } } }); persist(project); return { project } }),
-  setPositions: (positions) => set((state) => { const project = updateProject(state.project, { layout: { ...state.project.layout, positions: { ...state.project.layout.positions, ...positions } } }); persist(project); return { project } }),
+  setPositions: (positions, direction) => set((state) => { const project = updateProject(state.project, { layout: { ...state.project.layout, positions: { ...state.project.layout.positions, ...positions }, direction: direction ?? state.project.layout.direction } }); persist(project); return { project } }),
   togglePin: (id) => set((state) => { const pinned = state.project.layout.pinned.includes(id) ? state.project.layout.pinned.filter((item) => item !== id) : [...state.project.layout.pinned, id]; const project = updateProject(state.project, { layout: { ...state.project.layout, pinned } }); persist(project); return { project } }),
   toggleTheme: () => set((state) => { const theme = state.theme === 'dark' ? 'light' : 'dark'; localStorage.setItem('spaghetdb-theme', theme); return { theme } }),
   toggleHighContrast: () => set((state) => { const highContrast = !state.highContrast; localStorage.setItem('spaghetdb-contrast', String(highContrast)); return { highContrast } }),
